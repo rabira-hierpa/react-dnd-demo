@@ -1,7 +1,10 @@
+import { Dayjs } from "dayjs";
+
 export interface ITaskCard {
+  id: string;
   title: string;
   status: string;
-  startTime: any;
-  endTime: any;
+  startTime: Dayjs | null;
+  endTime: Dayjs | null;
   totalCost?: number;
 }

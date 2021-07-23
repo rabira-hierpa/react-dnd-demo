@@ -1,75 +1,13 @@
 import dayjs from 'dayjs';
 import React, { FC, useEffect, useState } from 'react';
 import TaskCard from './components/TaskCard';
+import { AppContext } from './context/AppContext';
+import { HOURLY_RATE } from './shared/EHourlyRate';
 import { ITaskCard } from './shared/ITaskCard';
 import { TASK_STATUS } from './shared/ITaskStatus';
 
-
-const taskList = [
-  {
-    title: 'Task 1',
-    status: TASK_STATUS.TODO,
-    startTime: null,
-    endTime: null,
-  },
-  {
-    title: 'Task 2',
-    status: TASK_STATUS.TODO,
-    startTime: null,
-    endTime: null,
-  },
-  {
-    title: 'Task 3',
-    status: TASK_STATUS.TODO,
-    startTime: null,
-    endTime: null,
-  },
-  {
-    title: 'Task 4',
-    status: TASK_STATUS.INPROGRESS,
-    startTime: dayjs(),
-    endTime: dayjs().add(1, 'day'),
-  },
-  {
-    title: 'Task 5',
-    status: TASK_STATUS.INPROGRESS,
-    startTime: dayjs(),
-    endTime: dayjs().add(1, 'day'),
-  },
-  {
-    title: 'Task 6',
-    status: TASK_STATUS.INPROGRESS,
-    startTime: dayjs(),
-    endTime: dayjs().add(1, 'day'),
-  },
-  {
-    title: 'Task 7',
-    status: TASK_STATUS.DONE,
-    startTime: dayjs(),
-    endTime: dayjs().add(1, 'day'),
-    totalCost: 10,
-  },
-  {
-    title: 'Task 8',
-    status: TASK_STATUS.DONE,
-    startTime: dayjs(),
-    endTime: dayjs().add(1, 'day'),
-    totalCost: 10,
-  },
-  {
-    title: 'Task 9',
-    status: TASK_STATUS.DONE,
-    startTime: dayjs(),
-    endTime: dayjs().add(1, 'day'),
-    totalCost: 10,
-  },
-];
-
 export function App() {
-  const [cardStatus, setCardStatus] = useState('');
-  const [startTime, setStartTime] = useState(null);
-  const [endTime, setEndTime] = useState(null);
-  const [cardList, setCardList] = useState<ITaskCard[]>([]);
+  const { taskList, setTaskList } = React.useContext(AppContext);
   const [todoTasks, setTodoTasks] = useState<ITaskCard[]>([]);
   const [inProgressTasks, setInProgressTasks] = useState<ITaskCard[]>([]);
   const [doneTasks, setDoneTasks] = useState<ITaskCard[]>([]);
@@ -81,11 +19,50 @@ export function App() {
   };
 
   useEffect(() => {
-    setCardList(taskList);
     setTodoTasks(filterTaskByStatus(TASK_STATUS.TODO));
     setInProgressTasks(filterTaskByStatus(TASK_STATUS.INPROGRESS));
     setDoneTasks(filterTaskByStatus(TASK_STATUS.DONE));
-  }, []);
+  }, [taskList]);
+
+  const onButtonClicked = (id: string, status: string) => {
+    switch (status) {
+      case TASK_STATUS.TODO:
+        {
+          const clicked: ITaskCard | any = taskList.find(
+            (task: ITaskCard) => task.id === id
+          );
+          clicked.startTime = dayjs().add(0, 'hour');
+          clicked.status = TASK_STATUS.INPROGRESS;
+          setTaskList(
+            taskList.map((task: ITaskCard) =>
+              task.id === id ? { ...task, clicked } : task
+            )
+          );
+        }
+        break;
+        case TASK_STATUS.INPROGRESS:
+        {
+          const clicked: ITaskCard | any = taskList.find(
+            (task: ITaskCard) => task.id === id
+          );
+          clicked.endTime = dayjs().add(0,'h');
+          clicked.status = TASK_STATUS.DONE;
+          console.log(dayjs(clicked.startTime))
+          console.log(dayjs(clicked.endTime))
+          const totalElapsedTime = Number(dayjs(clicked.endTime).subtract(clicked.startTime).hour());
+          console.log({totalElapsedTime})
+          clicked.totalCost = HOURLY_RATE.DEFAULT * totalElapsedTime
+          setTaskList(
+            taskList.map((task: ITaskCard) =>
+              task.id === id ? { ...task, clicked } : task
+            )
+          );
+        }
+        break;
+      case TASK_STATUS.DONE:
+        break;
+    }
+  };
 
   return (
     <div className="p-10">
@@ -100,7 +77,12 @@ export function App() {
               <div className="p-2">
                 {todoTasks.length ? (
                   todoTasks.map((todoTask) => {
-                    return <TaskCard {...todoTask} />;
+                    return (
+                      <TaskCard
+                        onButtonClicked={onButtonClicked}
+                        cardList={todoTask}
+                      />
+                    );
                   })
                 ) : (
                   <span></span>
@@ -113,8 +95,13 @@ export function App() {
               </h3>
               <div className="p-2">
                 {inProgressTasks.length ? (
-                  inProgressTasks.map((todoTask) => {
-                    return <TaskCard {...todoTask} />;
+                  inProgressTasks.map((inProgressTaskList) => {
+                    return (
+                      <TaskCard
+                        onButtonClicked={onButtonClicked}
+                        cardList={inProgressTaskList}
+                      />
+                    );
                   })
                 ) : (
                   <span></span>
@@ -125,8 +112,13 @@ export function App() {
               <h3 className="py-10 text-2xl font-bold text-green-300">Done</h3>
               <div className="p-2">
                 {doneTasks.length ? (
-                  doneTasks.map((todoTask) => {
-                    return <TaskCard {...todoTask} />;
+                  doneTasks.map((doneTaskList) => {
+                    return (
+                      <TaskCard
+                        onButtonClicked={onButtonClicked}
+                        cardList={doneTaskList}
+                      />
+                    );
                   })
                 ) : (
                   <span></span>
